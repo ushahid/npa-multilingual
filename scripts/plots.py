@@ -277,27 +277,25 @@ def make_per_language_bar_charts(df_long: pd.DataFrame, out_dir: str) -> List[st
     return paths
 
 
-def make_scatter_plot(
-    df_long: pd.DataFrame,
-    out_dir: str,
-    annotate: str = "frontier",     # "none" | "frontier" | "all"
-    annotate_topn: int = 0,         # if >0, annotate top-N by overall.R@1
-) -> str:
-    # Use one row per run for Scatter plot (dedupe by run_name if available)
+def make_kp_best_bar_figure(df_long: pd.DataFrame, out_dir: str) -> str:
+    """
+    One figure with 2 grouped bar charts:
+      - Left: x = k, y = overall R@1, each model pair shown after taking BEST over p
+      - Right: x = p, y = overall R@1, each model pair shown after taking BEST over k
+    """
     run_col = _pick_col(df_long, ["run_name", "run", "name"])
     text_col = _pick_col(df_long, ["text_model", "text"])
     img_col = _pick_col(df_long, ["image_model", "image"])
     k_col = _pick_col(df_long, ["k"])
     p_col = _pick_col(df_long, ["p"])
     r1_col = _pick_col(df_long, ["overall.R@1", "overall_r1", "overall_R@1"])
-    r50_col = _pick_col(df_long, ["overall.R@50", "overall_r50", "overall_R@50"])
 
-    required = [text_col, img_col, r1_col, r50_col, k_col, p_col]
+    required = [text_col, img_col, r1_col, k_col, p_col]
     if any(c is None for c in required):
         missing = [n for n, c in zip(
-            ["text_model", "image_model", "overall.R@1", "overall.R@50", "k", "p"], required
+            ["text_model", "image_model", "overall.R@1", "k", "p"], required
         ) if c is None]
-        raise RuntimeError(f"Missing required columns for Scatter plot: {missing}")
+        raise RuntimeError(f"Missing required columns for k/p vs R@1 bar figure: {missing}")
 
     runs = df_long.copy()
     if run_col:
@@ -305,86 +303,85 @@ def make_scatter_plot(
     else:
         runs = runs.drop_duplicates(subset=[text_col, img_col, k_col, p_col]).copy()
 
-    _to_numeric(runs, [r1_col, r50_col, k_col, p_col])
-    runs = runs.dropna(subset=[r1_col, r50_col, k_col, p_col])
+    _to_numeric(runs, [r1_col, k_col, p_col])
+    runs = runs.dropna(subset=[r1_col, k_col, p_col])
 
-    text_models = sorted(runs[text_col].dropna().unique())
-    image_models = sorted(runs[img_col].dropna().unique())
+    pair_order = []
+    for t in sorted(runs[text_col].dropna().unique()):
+        for im in sorted(runs[img_col].dropna().unique()):
+            sub = runs[(runs[text_col] == t) & (runs[img_col] == im)]
+            if not sub.empty:
+                pair_order.append((t, im))
 
-    markers = ["o", "s", "^", "D", "P", "X", "v", ">", "<"]
-    im_to_marker = {im: markers[i % len(markers)] for i, im in enumerate(image_models)}
+    if not pair_order:
+        raise RuntimeError("No valid model-pair rows found for the k/p vs R@1 bar figure.")
 
-    fig = plt.figure(figsize=(8.4, 5.8))
-    ax = fig.add_subplot(111)
+    k_values = sorted(int(v) for v in runs[k_col].dropna().unique())
+    p_values = sorted(int(v) for v in runs[p_col].dropna().unique())
 
-    # Plot each (text,image) combo as a series (9 legend entries total)
-    for t in text_models:
-        sub_t = runs[runs[text_col] == t]
-        for im in image_models:
-            sub = sub_t[sub_t[img_col] == im]
-            if sub.empty:
-                continue
-            ax.scatter(
-                sub[r1_col].to_numpy(),
-                sub[r50_col].to_numpy(),
-                marker=im_to_marker[im],
-                alpha=0.7,
+    # Aggregate: best over the other variable
+    # Left plot: best over p for each (text,image,k)
+    best_over_p = (
+        runs.groupby([text_col, img_col, k_col], as_index=False)[r1_col]
+        .max()
+        .rename(columns={r1_col: "best_r1"})
+    )
+    # Right plot: best over k for each (text,image,p)
+    best_over_k = (
+        runs.groupby([text_col, img_col, p_col], as_index=False)[r1_col]
+        .max()
+        .rename(columns={r1_col: "best_r1"})
+    )
+
+    fig, axes = plt.subplots(1, 2, figsize=(18, 7), constrained_layout=True)
+
+    def _grouped_bars(ax, value_list, grouped_df, x_col, title_suffix):
+        x = np.arange(len(value_list), dtype=float)
+        width = 0.82 / max(1, len(pair_order))
+
+        for idx, (t, im) in enumerate(pair_order):
+            sub = grouped_df[(grouped_df[text_col] == t) & (grouped_df[img_col] == im)].copy()
+            vals = []
+            for xv in value_list:
+                row = sub[sub[x_col] == xv]
+                vals.append(float(row["best_r1"].iloc[0]) if not row.empty else np.nan)
+
+            offset = (idx - (len(pair_order) - 1) / 2.0) * width
+            ax.bar(
+                x + offset,
+                vals,
+                width=width,
                 label=f"{t} | {im}",
+                alpha=0.9,
             )
 
-    tmp = runs.sort_values(r1_col, ascending=False).reset_index()
-    frontier_idx = []
-    best_y = -1e18
-    for _, row in tmp.iterrows():
-        yy = float(row[r50_col])
-        if yy > best_y + 1e-12:
-            frontier_idx.append(int(row["index"]))
-            best_y = yy
+        ax.set_xticks(x)
+        ax.set_xticklabels([str(v) for v in value_list])
+        ax.set_ylabel("Overall R@1")
+        ax.grid(axis="y", alpha=0.3)
+        ax.set_title(title_suffix)
 
-    # ---- Annotations ----
-    def _label_for_row(r) -> str:
-        return f'k={int(r[k_col])},p={int(r[p_col])}'
+    _grouped_bars(
+        axes[0],
+        k_values,
+        best_over_p,
+        k_col,
+        title_suffix="Overall R@1 vs k across all model pairs\n(grouped bars; each series = best over p)",
+    )
+    axes[0].set_xlabel("k")
+    axes[0].legend(fontsize=7, ncol=1, frameon=True)
 
-    if annotate == "frontier":
-        for _, r in runs.loc[frontier_idx].iterrows():
-            ax.annotate(
-                _label_for_row(r),
-                (float(r[r1_col]), float(r[r50_col])),
-                textcoords="offset points",
-                xytext=(4, 4),
-                fontsize=7,
-            )
+    _grouped_bars(
+        axes[1],
+        p_values,
+        best_over_k,
+        p_col,
+        title_suffix="Overall R@1 vs p across all model pairs\n(grouped bars; each series = best over k)",
+    )
+    axes[1].set_xlabel("p")
+    axes[1].legend(fontsize=7, ncol=1, frameon=True)
 
-    elif annotate == "all":
-        for _, r in runs.iterrows():
-            ax.annotate(
-                _label_for_row(r),
-                (float(r[r1_col]), float(r[r50_col])),
-                textcoords="offset points",
-                xytext=(3, 3),
-                fontsize=6,
-                alpha=0.8,
-            )
-
-    if annotate_topn and annotate_topn > 0:
-        top = runs.sort_values(r1_col, ascending=False).head(int(annotate_topn))
-        for _, r in top.iterrows():
-            ax.annotate(
-                _label_for_row(r),
-                (float(r[r1_col]), float(r[r50_col])),
-                textcoords="offset points",
-                xytext=(4, -10),
-                fontsize=7,
-            )
-
-    ax.set_xlabel("Overall R@1")
-    ax.set_ylabel("Overall R@50")
-    ax.set_title("Scatter plot across ALL model pairs and (k,p)")
-    ax.grid(True, alpha=0.3)
-    ax.legend(fontsize=7, ncol=2, frameon=True)
-
-    out_path = os.path.join(out_dir, "scatter_plot_all_pairs_R1_vs_R50.png")
-    fig.tight_layout()
+    out_path = os.path.join(out_dir, "bar_k_vs_p_vs_R1_all_pairs.png")
     fig.savefig(out_path, dpi=220)
     plt.close(fig)
     return out_path
@@ -475,12 +472,12 @@ def main():
     df = pd.read_csv(args.csv)
 
     created = []
-    created += make_kp_language_distribution_plots(
-        df, args.out_dir, show_overall_line=(not args.no_overall_line)
-    )
-    created.append(make_scatter_plot(df, args.out_dir, annotate="frontier"))
-    created.append(make_best_bar_chart(df, args.out_dir))
-    created.append(make_per_language_bar_charts(df, args.out_dir))
+    # created += make_kp_language_distribution_plots(
+    #     df, args.out_dir, show_overall_line=(not args.no_overall_line)
+    # )
+    created.append(make_kp_best_bar_figure(df, args.out_dir))
+    # created.append(make_best_bar_chart(df, args.out_dir))
+    # created.append(make_per_language_bar_charts(df, args.out_dir))
 
     print(f"[OK] Wrote {len(created)} plot files to: {args.out_dir}")
 
