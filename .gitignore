@@ -2,7 +2,10 @@
 __pycache__/
 *.py[codz]
 *$py.class
-
+translate-sa.json
+old rrs/
+outputs/
+plots/
 # C extensions
 *.so
 
