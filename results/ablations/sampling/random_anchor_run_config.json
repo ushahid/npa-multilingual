@@ -1,0 +1,41 @@
+{
+  "created_at": "2026-04-29T17:13:51.501165",
+  "retrieval_script": "/mnt/data/shared/npa-multilingual/scripts/xm3600_rr_ablation.py",
+  "xm_cache": "/mnt/data/shared/npa-multilingual/downloads/xm3600/caches",
+  "cc_cache": "/mnt/data/shared/npa-multilingual/downloads/conceptual12m/caches",
+  "out_root": "/mnt/data/shared/npa-multilingual/outputs/ablations/sampling",
+  "text_model": "qwen3-embed-8b",
+  "image_model": "c-radio-v4-h",
+  "k": 800,
+  "p": 4,
+  "proc": "asif",
+  "dtype": "float32",
+  "base_anchor_n": 1600000,
+  "percentages": [
+    100.0,
+    90.0,
+    80.0,
+    70.0,
+    60.0,
+    50.0
+  ],
+  "repeats": 10,
+  "seed_start": 0,
+  "repeat_full_percentage": false,
+  "Ks": [
+    1,
+    5,
+    10,
+    25,
+    50
+  ],
+  "device": "cuda:0",
+  "anchor_chunk": 100000,
+  "image_batch": 256,
+  "query_batch": 2048,
+  "languages": null,
+  "max_queries": null,
+  "reuse_cache": true,
+  "inner_progress": true,
+  "one_per_image_per_lang": false
+}
