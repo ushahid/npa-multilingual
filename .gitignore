@@ -6,6 +6,7 @@ translate-sa.json
 old rrs/
 outputs/
 plots/
+/results/
 # C extensions
 *.so
 
