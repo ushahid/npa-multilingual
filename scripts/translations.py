@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""Translate XM3600 captions to English with Google Cloud NMT and Translation LLM.
+Writes translated_captions.jsonl for the CLIP baselines and resumes by image ID."""
+
 import os
 import json
 import time
@@ -231,7 +234,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--captions",
-        default="/mnt/data/shared/npa-multilingual/downloads/xm3600/captions.jsonl",
+        default="downloads/xm3600/captions.jsonl",
         help="Path to XM3600 captions.jsonl",
     )
     parser.add_argument(

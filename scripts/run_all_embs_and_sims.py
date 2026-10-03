@@ -1,32 +1,6 @@
 #!/usr/bin/env python3
-"""End-to-end automation: build indexes + embedding caches (all models) for CC12M + XM3600,
-then generate similarity plots.
-
-This script is the orchestration layer. It calls the existing scripts we already have:
-  - cc12m_dataset.py  (index/text/image)
-  - xm3600_dataset.py (index/text/image)
-  - cc12m_xm3600_sims.py (plots)
-
-Defaults are set for our plan:
-- CC12M: build embeddings for the first 1.6M samples
-- XM3600: build embeddings for the full dataset
-- Images resized via processors with --image_size 300
-- Similarity plots for anchors [0,100,200,300,400] and languages [en,fr,hi,te,mi] + "all" (ANY)
-
-Re-run friendly:
-- The dataset scripts will skip a model cache if its DONE marker exists.
-- The sims script will overwrite plots if run again.
-
-Example:
-  python run_all_embeddings_and_sims.py \
-    --cc_wds_dir /path/to/cc12m/shards \
-    --cc_cache_dir /path/to/cc_cache \
-    --xm_captions /path/to/xm3600/captions.jsonl \
-    --xm_images_dir /path/to/xm3600/unpackedImages \
-    --xm_cache_dir /path/to/xm_cache \
-    --plots_out_root /path/to/plots \
-    --device cuda:0
-"""
+"""Build CC12M and XM3600 indexes and embedding caches, then optionally plot similarities.
+Calls the dataset scripts in index, text, image order; use --skip_plots for caches only."""
 
 from __future__ import annotations
 
@@ -119,7 +93,7 @@ def run_cmd(cmd: List[str], *, log_path: Path, env: Dict[str, str]) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    ap = argparse.ArgumentParser("run_all_embeddings_and_sims")
+    ap = argparse.ArgumentParser("run_all_embs_and_sims")
 
     ap.add_argument("--cc_wds_dir", required=True, help="CC12M WebDataset shard dir (cc12m-train-*.tar)")
     ap.add_argument("--cc_cache_dir", required=True, help="CC12M cache_dir root")
@@ -170,9 +144,9 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--skip_embeddings", action="store_true", help="Skip embedding generation (both datasets)")
     ap.add_argument("--skip_plots", action="store_true", help="Skip similarity plots")
 
-    ap.add_argument("--cc12m_script", default="/mnt/data/shared/npa-multilingual/scripts/cc12m_dataset.py", help="Path to cc12m_dataset.py")
-    ap.add_argument("--xm3600_script", default="/mnt/data/shared/npa-multilingual/scripts/xm3600_dataset.py", help="Path to xm3600_dataset.py")
-    ap.add_argument("--sims_script", default="/mnt/data/shared/npa-multilingual/scripts/cc12m_xm3600_sims.py", help="Path to cc12m_xm3600_sims.py")
+    ap.add_argument("--cc12m_script", default=str(Path(__file__).resolve().with_name("cc12m_dataset.py")), help="Path to cc12m_dataset.py")
+    ap.add_argument("--xm3600_script", default=str(Path(__file__).resolve().with_name("xm3600_dataset.py")), help="Path to xm3600_dataset.py")
+    ap.add_argument("--sims_script", default=str(Path(__file__).resolve().with_name("cc12m_xm3600_sims.py")), help="Path to cc12m_xm3600_sims.py")
 
     ap.add_argument(
         "--log_dir",

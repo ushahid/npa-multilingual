@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Cache XM3600 image and original-caption embeddings with Qwen3-VL through vLLM."""
+
 import os
 import json
 import argparse
@@ -198,11 +200,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--captions_jsonl",
-        default="/mnt/data/shared/npa-multilingual/downloads/xm3600/captions.jsonl",
+        default="downloads/xm3600/captions.jsonl",
     )
     ap.add_argument(
         "--images_dir",
-        default="/mnt/data/shared/npa-multilingual/downloads/xm3600/unpackedImages",
+        default="downloads/xm3600/unpackedImages",
     )
     ap.add_argument(
         "--cache_dir",

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Evaluate dense caption-to-image cosine retrieval from a CLIP or Qwen baseline cache."""
+
 import os
 import json
 import time

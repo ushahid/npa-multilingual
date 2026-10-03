@@ -1,32 +1,6 @@
 #!/usr/bin/env python3
-"""Generate similarity distribution plots between XM3600 anchors and CC12M candidates (caches).
-
-This is a drop-in evolution of the original cc12m_xm3600_sims.py, updated to support the
-new cache layout with *model-tagged* / decoupled embeddings:
-
-cache_dir/
-  index/
-    (XM3600) images.jsonl, captions.jsonl, meta.json
-    (CC12M)  samples.jsonl (newer) OR images.jsonl + captions.jsonl (if unified)
-  embeddings/
-    text/<model_tag>/...
-    image/<model_tag>/...
-
-New capabilities:
-- Choose which TEXT model and which IMAGE model to use for plots.
-- Accept model inputs as either preset keys (e.g. bge-m3) or HF repo ids
-  (e.g. BAAI/bge-m3), and auto-resolve to an existing cached model_tag.
-
-All previous functionality is preserved:
-- Multiple anchors per run (--xm_image_idx ...)
-- Multiple preferred languages per run (--anchor_language ...)
-- Top-k retrieval on CC12M using IMAGE sims; then inspect TEXT sims of those top-k images.
-- Histogram plots saved as PNG + info log TXT + top-captions CSV.
-
-Notes:
-- The *compute dtype* (--dtype) is independent of how saved embeddings.
-- For CC12M, this script assumes 1 caption per image (as before).
-"""
+"""Plot CC12M image/text similarity distributions for selected XM3600 queries.
+Reads embedding caches and writes PNG plots, caption CSVs, and text summaries."""
 
 import os
 import json
@@ -439,7 +413,7 @@ def parse_args():
     ap.add_argument(
         "--out_root",
         type=str,
-        default="/mnt/data/shared/npa-multilingual/plots/cc12m_sim_dist_from_xm3600_query",
+        default="plots/cc12m_sim_dist_from_xm3600_query",
     )
     ap.add_argument("--output", type=str, default="similarity")
 

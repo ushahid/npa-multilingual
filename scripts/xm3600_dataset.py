@@ -1,48 +1,6 @@
 #!/usr/bin/env python3
-"""XM3600: index + embeddings cache (text/image decoupled).
-
-Requested upgrades:
-- Default save dtype is float32 (no fp16 truncation unless requested).
-- Store text and image embeddings in separate folders with independent loaders.
-- Support choosing which model is used to save embeddings.
-- Skip building when a cache for (modality, model_tag) already exists (DONE marker).
-
-Cache layout under --cache_dir:
-
-  cache_dir/
-    index/
-      images.jsonl
-      captions.jsonl
-      meta.json
-    embeddings/
-      image/<model_tag>/
-        meta.json
-        image_embs_0000.pt ...
-        DONE
-      text/<model_tag>/
-        meta.json
-        caption_embs_0000.pt ...
-        DONE
-
-Invariants:
-- Image embeddings are aligned to index/images.jsonl by image_idx (line order).
-- Caption embeddings are aligned to index/captions.jsonl by caption_id (line order).
-- Can be consolidated back in memory by joining on image_idx/caption_id.
-
-Models (presets):
-Text:
-  - nllb-200-3.3B  -> facebook/nllb-200-3.3B
-  - bge-m3         -> BAAI/bge-m3
-  - qwen3-embed-8b -> Qwen/Qwen3-Embedding-8B
-Image:
-  - dinov3-vit7b16 -> facebook/dinov3-vit7b16-pretrain-lvd1689m
-  - clip-vit-bigg14 -> laion/CLIP-ViT-bigG-14-laion2B-39B-b160k
-  - c-radio-v4-h   -> nvidia/C-RADIOv4-H
-
-Notes:
-- RADIO/Qwen embedding models may require trust_remote_code=True.
-- DINOv3 requires recent transformers.
-"""
+"""Index XM3600 captions/images and cache embeddings by model.
+Image and caption shards preserve their respective index file order and share image_idx."""
 
 from __future__ import annotations
 

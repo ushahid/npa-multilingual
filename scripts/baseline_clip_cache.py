@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Cache CLIP image and translated-caption embeddings for the NMT or TLLM baseline."""
+
 import os
 import json
 import shutil

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""Sweep anchor-bank size using the first N CC12M pairs at each percentage.
+Calls the RR retrieval script and writes recall summaries and a plot."""
+
 import argparse
 import csv
 import json
@@ -208,7 +211,7 @@ def _plot_results(path: Path, rows: List[RunSummary]) -> None:
 def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(description="Run anchor-percentage ablations for XM3600 RR retrieval")
 
-    ap.add_argument("--retrieval_script", default="/mnt/data/shared/npa-multilingual/scripts/xm3600_rr_retrieval.py", help="Path to xm3600_rr_retrieval.py")
+    ap.add_argument("--retrieval_script", default=str(Path(__file__).resolve().with_name("xm3600_rr_retrieval.py")), help="Path to xm3600_rr_retrieval.py")
     ap.add_argument("--xm_cache", required=True, help="XM3600 cache dir")
     ap.add_argument("--cc_cache", required=True, help="CC12M cache dir")
     ap.add_argument("--out_root", required=True, help="Output root for runs, logs, summaries, and plot")

@@ -1,41 +1,6 @@
 #!/usr/bin/env python3
-"""XM3600 multilingual caption → image retrieval using AS-IF Relative Representations.
-
-This evaluates multilingual caption→image retrieval on XM3600 using CC12M as the
-reference/anchor set for relative representations (RR).
-
-RR(y) is the sparse vector of top-k cosine similarities between y and the anchor
-set (one coordinate per anchor).
-
-Scoring for retrieval is a dot product in RR space:
-  score(img | caption) = < RR_text(caption), RR_img(img) >
-
-We support 3 processing modes for RR values:
-  - none: keep raw top-k cosine similarities
-  - norm: L2-normalize the sparse vector (no exponentiation)
-  - asif: exponentiate similarities by p and L2-normalize (paper-style)
-
-This script supports the *new cache layout* used by the updated dataset builders:
-
-cache_dir/
-  index/
-    images.jsonl
-    captions.jsonl
-    meta.json
-  embeddings/
-    text/<model_tag>/
-      meta.json
-      caption_embs_0000.pt ... (or text_embs_0000.pt)
-      DONE
-    image/<model_tag>/
-      meta.json
-      image_embs_0000.pt ...
-      DONE
-
-It also remains backward-compatible with older flat caches that had:
-  - image_embs.pt / caption_embs.pt
-  - image_index.json / caption_index.json
-"""
+"""Evaluate XM3600 caption-to-image retrieval using CC12M anchor-relative representations.
+Reads paired embedding caches and writes image RR caches and overall/per-language recall."""
 
 from __future__ import annotations
 

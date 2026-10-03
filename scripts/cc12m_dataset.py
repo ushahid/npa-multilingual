@@ -1,32 +1,6 @@
 #!/usr/bin/env python3
-"""
-CC12M (pixparse WebDataset) indexing + embedding caching pipeline (v2).
-
-Goals (v2):
-  1) Default save_dtype=float32 (no truncation unless explicitly requested).
-  2) Decouple image/text embeddings into separate folders with separate loaders.
-  3) Allow choosing among multiple text/image encoder models; skip if already cached.
-
-Folder layout (cache_dir):
-  index/
-    samples.jsonl          # one record per sample_id (caption + key + shard + meta)
-    meta.json
-  embeddings/
-    text/<model_tag>/
-      meta.json
-      DONE
-      text_embs_0000.pt, text_embs_0001.pt, ...
-    image/<model_tag>/
-      meta.json
-      DONE
-      image_embs_0000.pt, image_embs_0001.pt, ...
-
-The ordering invariant is: embeddings are stored in the same order as index/samples.jsonl.
-Thus sample_id i corresponds to:
-  shard_id = i // emb_chunk_size
-  offset   = i %  emb_chunk_size
-for a given embedding cache (model_tag + modality).
-"""
+"""Index CC12M WebDataset shards and cache image/text embeddings by model.
+Both modalities follow index/samples.jsonl order so each row refers to the same anchor pair."""
 import glob
 import os
 import io

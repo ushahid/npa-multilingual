@@ -1,21 +1,6 @@
 #!/usr/bin/env python3
-"""Run XM3600 RR retrieval for all model combinations and (k,p) grids.
-
-This script wraps your retrieval runner:
-  scripts/xm3600_rr_retrieval.py
-
-It does NOT modify retrieval logic. It only iterates over:
-  - text_model ∈ {nllb-200-3.3B, bge-m3, qwen3-embed-8b}
-  - image_model ∈ {dinov3-vit7b16, clip-vit-bigg14, c-radio-v4-h}
-  - k ∈ {200, 400, 800, 1200, 1600}
-  - p ∈ {2, 4, 8}
-
-Output folder naming matches your example:
-  <imageTag>_<textTag>_k<K>_p<P>
-
-Per-run logs are written under:
-  <out_root>/logs/<imageTag>_<textTag>_k<K>_p<P>.log
-"""
+"""Run RR retrieval over the text/image encoder pairs and k/p grid.
+Writes a result directory and log for each configuration under --out_root."""
 
 from __future__ import annotations
 
@@ -23,6 +8,7 @@ import argparse
 import os
 import shlex
 import subprocess
+import sys
 from pathlib import Path
 from datetime import datetime
 
@@ -65,7 +51,7 @@ def main() -> None:
     ap.add_argument(
         "--retrieval_script",
         type=str,
-        default="scripts/xm3600_rr_retrieval.py",
+        default=str(Path(__file__).resolve().with_name("xm3600_rr_retrieval.py")),
         help="Path to xm3600_rr_retrieval.py",
     )
 
@@ -158,7 +144,7 @@ def main() -> None:
                     out_dir.mkdir(parents=True, exist_ok=True)
 
                     cmd = [
-                        "python",
+                        sys.executable,
                         str(retrieval_script),
                         "--xm_cache",
                         str(xm_cache),

@@ -1,23 +1,5 @@
 #!/usr/bin/env python3
-"""
-Generate RR sweep plots from rr_sweep_per_language.csv
-
-Plots created:
-1) KP sensitivity per (text_model, image_model) for R@1 across ALL languages:
-   - line = mean across languages
-   - band = IQR (25–75%)
-   - dashed = min/max
-   (optionally overlays overall.R@1 if present)
-
-2) Scatter plot for ALL runs:
-   - x = overall R@1
-   - y = overall R@50
-   - points for all (text,image,k,p) runs
-
-3) Bar chart: best overall R@1 per model pair (max over k,p), annotated with (k,p)
-
-No seaborn. No explicit colors (matplotlib default cycle only).
-"""
+"""Plot R@1 across k/p settings for each encoder pair from rr_sweep_per_language.csv."""
 
 import argparse
 import os

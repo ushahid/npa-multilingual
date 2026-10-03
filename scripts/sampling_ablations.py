@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""Evaluate repeated random subsets of the CC12M anchor bank.
+Writes sampled indices, per-run recall, aggregate means/standard deviations, and a plot."""
+
 
 import argparse
 import csv
@@ -354,8 +357,8 @@ def parse_args() -> argparse.Namespace:
 
     ap.add_argument(
         "--retrieval_script",
-        default="/mnt/data/shared/npa-multilingual/scripts/xm3600_rr_ablation.py",
-        help="Path to xm3600_rr_retrieval_anchor_subset.py",
+        default=str(Path(__file__).resolve().with_name("xm3600_rr_ablation.py")),
+        help="Path to xm3600_rr_ablation.py",
     )
     ap.add_argument("--xm_cache", required=True)
     ap.add_argument("--cc_cache", required=True)

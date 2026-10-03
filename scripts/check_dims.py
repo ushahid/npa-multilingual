@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Print the C-RADIO embedding shape for a dummy image to check the model output."""
+
 from PIL import Image
 import torch
 from transformers import AutoImageProcessor, AutoModel

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+"""Evaluate RR retrieval with explicit CC12M anchor indices or the first N anchors.
+Reuses xm3600_rr_retrieval.py and preserves the same subset order for both modalities."""
+
 
 import argparse
 import hashlib
@@ -17,8 +20,7 @@ import torch
 def _load_base_module() -> Any:
     candidates = [
         os.environ.get("XM3600_RR_BASE_SCRIPT", ""),
-        "/mnt/data/shared/npa-multilingual/scripts/xm3600_rr_retrieval.py",
-        str(Path(__file__).with_name("xm3600_rr_retrieval.py")),
+        str(Path(__file__).resolve().with_name("xm3600_rr_retrieval.py")),
     ]
     for path in candidates:
         if path and os.path.isfile(path):
